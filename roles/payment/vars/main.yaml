@@ -1,0 +1,5 @@
+CART_HOST: cart.vinnimakeovers.online
+USER_HOST: user.vinnimakeovers.online
+RABBITMQ_HOST: rabbitmq.vinnimakeovers.online
+RABBITMQ_USER: roboshop
+RABBITMQ_PASSWORD: roboshop123

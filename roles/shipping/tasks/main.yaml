@@ -1,0 +1,82 @@
+  - name: app setup
+    include_role:
+     name: common
+     tasks_from: app-setup
+
+  - name: maven setup
+    include_role:
+     name: common
+     tasks_from: app-setup
+  - name: systemd setup
+    include_role:
+     name: common
+     tasks_from: systemd
+
+
+
+  - name: create app directory
+    ansible.builtin.file:
+      path: /app
+      state: directory
+
+  - name: create roboshop system user
+    ansible.builtin.user:
+      name: roboshop
+      shell: /sbin/nologin
+      system: true
+      home: /app
+
+  - name: download shipping code
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip 
+      dest: /tmp/shipping.zip
+
+  - name: extract shipping code
+    ansible.builtin.unarchive:
+      src: /tmp/shipping.zip
+      dest: /app
+      remote_src: yes
+
+  
+
+  - name: copy shipping service
+    ansible.builtin.copy:
+      src: shipping.service
+      dest: /etc/systemd/system/shipping.service
+
+  - name: daemon reload
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+
+  - name: enable and start shipping
+    ansible.builtin.service:
+      name: shipping
+      state: started
+      enabled: yes
+
+  # - name: connect to mysql using app user
+  #   community.mysql.mysql_info:
+  #     login_user: shipping
+  #     login_password: RoboShop@1
+  #     login_host: mysql.vinnimakeovers.online
+  #     login_db: cities
+
+  - name: import data
+    
+    community.mysql.mysql_db:
+      name: all
+      login_user: "{{ MYSQL_ROOT_USER }}"
+      login_password: "{{ MYSQL_ROOT_PASSWORD }}"
+      login_host: "{{ MYSQL_HOST }}"
+      state: import
+      target: "{{ item }}"
+    loop:
+    - /app/db/schema.sql
+    - /app/db/app-user.sql
+    - /app/db/master-data.sql
+
+
+  
+
+
+  
